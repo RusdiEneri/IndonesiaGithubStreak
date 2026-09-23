@@ -1,59 +1,65 @@
-name: Update leaderboard and deploy
+name: Update leaderboard and deploy 
+ 
+on: 
+  schedule: 
+    - cron: '0 11 * * *' 
+  workflow_dispatch: 
+ 
+permissions: 
+  contents: read 
+  pages: write 
+  id-token: write 
+ 
+concurrency: 
+  group: pages 
+  cancel-in-progress: true 
+ 
+jobs: 
+  build-and-deploy: 
+    runs-on: ubuntu-latest 
+ 
+    environment: 
+      name: github-pages 
+      url: ${{ steps.deployment.outputs.page_url }} 
+ 
+    steps: 
+      - name: Checkout 
+        uses: actions/checkout@v6 
+ 
+      - name: Configure Git 
+        run: | 
+          git config --global user.name "RusdiEneri" 
+          git config --global user.email "nuruddinrusydiilham@gmail.com" 
+ 
+      - name: Setup Node 
+        uses: actions/setup-node@v6 
+        with: 
+          node-version: 24 
+ 
+      # TAMBAHAN: Menghitung tanggal tepat 1 tahun yang lalu
+      - name: Calculate 1 year ago date
+        id: date_calc
+        run: echo "streak_from=$(date -u -d '1 year ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
-on:
-  schedule:
-    - cron: '0 11 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Configure Git
-        run: |
-          git config --global user.name "RusdiEneri"
-          git config --global user.email "nuruddinrusydiilham@gmail.com"
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - name: Generate leaderboard data
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAX_CANDIDATES: 250
-          SEARCH_PER_LOCATION: 100
-          SEARCH_DELAY_MS: 2200
-          GRAPHQL_BATCH_SIZE: 8
-          STREAK_FROM: '2008-01-01T00:00:00Z'
-        run: node scripts/update.js
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./public
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - name: Generate leaderboard data 
+        env: 
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          MAX_CANDIDATES: 250 
+          SEARCH_PER_LOCATION: 100 
+          SEARCH_DELAY_MS: 2200 
+          GRAPHQL_BATCH_SIZE: 8 
+          # UBAH: Menggunakan hasil output dinamis dari step di atas
+          STREAK_FROM: ${{ steps.date_calc.outputs.streak_from }}
+        run: node scripts/update.js 
+ 
+      - name: Configure Pages 
+        uses: actions/configure-pages@v5 
+ 
+      - name: Upload Pages artifact 
+        uses: actions/upload-pages-artifact@v4 
+        with: 
+          path: ./public 
+ 
+      - name: Deploy to GitHub Pages 
+        id: deployment 
         uses: actions/deploy-pages@v4
