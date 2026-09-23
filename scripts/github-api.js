@@ -15,8 +15,9 @@ async function fetchWithRetry(url, options, maxRetries = 2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const res = await fetch(url, options);
     if ((res.status === 403 || res.status === 429) && attempt < maxRetries) {
-      const retryAfter = Number(res.headers.get('retry-after') || 10);
-      const waitMs = Math.max(retryAfter * 1000, 10000);
+      const retryAfter = Number(res.headers.get('retry-after') || 0);
+      // ponytail: GitHub secondary rate limit requires at least 60s cool-off if retry-after is absent.
+      const waitMs = retryAfter > 0 ? retryAfter * 1000 : 60000;
       console.warn(`Rate limit encountered (${res.status}). Waiting ${waitMs / 1000}s before retry...`);
       await new Promise((r) => setTimeout(r, waitMs));
       continue;

@@ -33,18 +33,29 @@ console.log(`Streak window: ${from} -> ${to}`);
 const candidates = new Map();
 
 for (const [index, location] of locations.entries()) {
+  if (candidates.size >= maxCandidates) {
+    console.log(`Candidate target reached (${candidates.size}/${maxCandidates}), stopping further search.`);
+    break;
+  }
+
   const query = `location:${JSON.stringify(location)} sort:followers-desc`;
   console.log(`Searching users: ${query}`);
-  const users = await searchUsers({ token, query, perPage: perLocation });
-  for (const user of users) {
-    candidates.set(user.login, {
-      login: user.login,
-      avatarUrl: user.avatar_url,
-      htmlUrl: user.html_url,
-      location: user.location || null,
-      followers: user.followers ?? 0
-    });
+  try {
+    const users = await searchUsers({ token, query, perPage: perLocation });
+    for (const user of users) {
+      candidates.set(user.login, {
+        login: user.login,
+        avatarUrl: user.avatar_url,
+        htmlUrl: user.html_url,
+        location: user.location || null,
+        followers: user.followers ?? 0
+      });
+    }
+  } catch (err) {
+    console.warn(`Search rate limited or failed for "${location}": ${err.message}. Proceeding with ${candidates.size} candidates.`);
+    break;
   }
+
   if (index < locations.length - 1 && searchDelayMs > 0) {
     await new Promise((resolve) => setTimeout(resolve, searchDelayMs));
   }

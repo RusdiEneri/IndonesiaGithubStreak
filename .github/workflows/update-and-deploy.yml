@@ -45,12 +45,12 @@ jobs:
 
       - name: Generate leaderboard data 
         env: 
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          MAX_CANDIDATES: 100          # Dikurangi jadi 100 (sudah cukup untuk top leaderboard)
-          SEARCH_PER_LOCATION: 20      # Dikurangi dari 100. (32 lokasi * 20 = 640 kandidat, lebih dari cukup)
-          SEARCH_DELAY_MS: 5000        # SANGAT PENTING: Naikkan jadi 5 detik (aman di bawah batas 30 req/menit)
-          GRAPHQL_BATCH_SIZE: 1        # Turunkan jadi 1 per request agar sangat ringan
-          GRAPHQL_DELAY_MS: 3000       # Naikkan jadi 3 detik antar request kalender
+          GH_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }} 
+          MAX_CANDIDATES: 100          # Cukup untuk top leaderboard
+          SEARCH_PER_LOCATION: 50      # 50 per lokasi agar cukup 2-3 query search saja
+          SEARCH_DELAY_MS: 10000       # 10 detik antar search query agar aman dari rate limit
+          GRAPHQL_BATCH_SIZE: 1        # 1 user per request agar sangat ringan
+          GRAPHQL_DELAY_MS: 3000       # 3 detik antar request kalender GraphQL
           STREAK_FROM: ${{ steps.date_calc.outputs.streak_from }}
         run: node scripts/update.js 
  
