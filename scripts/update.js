@@ -32,25 +32,38 @@ console.log(`Streak window: ${from} -> ${to}`);
 
 const candidates = new Map();
 
+try {
+  const prev = JSON.parse(await fs.readFile(path.join(ROOT, 'public', 'data', 'ranking.json'), 'utf8'));
+  for (const user of prev.ranking || []) {
+    if (user.login) candidates.set(user.login, { login: user.login, source: 'tracked' });
+  }
+  if (candidates.size > 0) {
+    console.log(`Loaded ${candidates.size} existing streak holders from previous ranking.`);
+  }
+} catch {
+  // No previous ranking, start fresh
+}
+
 for (const [index, location] of locations.entries()) {
   if (candidates.size >= maxCandidates) {
     console.log(`Candidate target reached (${candidates.size}/${maxCandidates}), stopping further search.`);
     break;
   }
 
-  const query = `location:${JSON.stringify(location)} type:user sort:followers-desc`;
+  const query = `location:${JSON.stringify(location)} type:user`;
   console.log(`Searching users: ${query}`);
   try {
     const users = await searchUsers({ token, query, perPage: perLocation });
     for (const user of users) {
       if (user.type && user.type !== 'User') continue;
-      candidates.set(user.login, {
-        login: user.login,
-        avatarUrl: user.avatar_url,
-        htmlUrl: user.html_url,
-        location: user.location || null,
-        followers: user.followers ?? 0
-      });
+      if (!candidates.has(user.login)) {
+        candidates.set(user.login, {
+          login: user.login,
+          avatarUrl: user.avatar_url,
+          htmlUrl: user.html_url,
+          location: user.location || null
+        });
+      }
     }
   } catch (err) {
     console.warn(`Search rate limited or failed for "${location}": ${err.message}. Proceeding with ${candidates.size} candidates.`);
@@ -65,11 +78,15 @@ for (const [index, location] of locations.entries()) {
 for (const entry of extraUsers) {
   const login = typeof entry === 'string' ? entry : entry.login;
   if (!login) continue;
-  candidates.set(login, { login, source: 'manual' });
+  candidates.set(login, { ...candidates.get(login), login, source: 'manual' });
 }
 
+// ponytail: Prioritize manual additions and established streak holders over arbitrary search results
 const orderedCandidates = [...candidates.values()]
-  .sort((a, b) => (b.followers ?? 0) - (a.followers ?? 0) || a.login.localeCompare(b.login))
+  .sort((a, b) => {
+    const p = (u) => (u.source === 'manual' ? 2 : (u.source === 'tracked' ? 1 : 0));
+    return p(b) - p(a) || a.login.localeCompare(b.login);
+  })
   .slice(0, maxCandidates);
 
 console.log(`Unique candidates: ${candidates.size}; evaluating: ${orderedCandidates.length}`);
