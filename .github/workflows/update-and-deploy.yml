@@ -17,6 +17,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -24,6 +25,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "RusdiEneri"
+          git config --global user.email "nuruddinrusydiilham@gmail.com"
 
       - name: Setup Node
         uses: actions/setup-node@v6
