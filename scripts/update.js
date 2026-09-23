@@ -17,6 +17,24 @@ const perLocation = Number(process.env.SEARCH_PER_LOCATION || 20);
 const batchSize = Number(process.env.GRAPHQL_BATCH_SIZE || 1);
 const searchDelayMs = Number(process.env.SEARCH_DELAY_MS || 5000);
 const graphqlDelayMs = Number(process.env.GRAPHQL_DELAY_MS || 3000);
+const streakApiBase = process.env.STREAK_API_BASE || 'https://github-readme-streak-stats-alok-2c66.vercel.app';
+const streakApiDelayMs = Number(process.env.STREAK_API_DELAY_MS || 1000);
+
+// ponytail: Fetch all-time streak from external streak-stats API; falls back to local
+// 1-year-window calculation. Ceiling: API is a third-party service, not GitHub's own data.
+async function fetchStreakStats(login) {
+  try {
+    const res = await fetch(`${streakApiBase}/?user=${encodeURIComponent(login)}&type=json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const longest = data?.longestStreak?.length;
+    const current = data?.currentStreak?.length;
+    if (typeof longest !== 'number' || typeof current !== 'number') return null;
+    return { longestStreak: longest, currentStreak: current };
+  } catch {
+    return null;
+  }
+}
 
 const now = new Date();
 // ponytail: default 1-year trailing window. GitHub GraphQL limits contributionsCollection to max 1 year.
@@ -104,8 +122,14 @@ const ranking = [];
 for (const user of profiles) {
   const days = user.contributionsCollection?.contributionCalendar?.weeks
     ?.flatMap((week) => week.contributionDays) ?? [];
-  const streaks = calculateStreaks(days, today);
+  const localStreaks = calculateStreaks(days, today);
   const totalContributions = user.contributionsCollection?.contributionCalendar?.totalContributions ?? 0;
+
+  const apiStreaks = await fetchStreakStats(user.login);
+  if (!apiStreaks) console.warn(`streak-stats API miss for ${user.login}, using local fallback`);
+  const { longestStreak, currentStreak } = apiStreaks ?? localStreaks;
+
+  if (streakApiDelayMs > 0) await new Promise((r) => setTimeout(r, streakApiDelayMs));
 
   ranking.push({
     login: user.login,
@@ -116,8 +140,8 @@ for (const user of profiles) {
     bio: user.bio,
     followers: user.followers?.totalCount ?? 0,
     publicRepos: user.publicRepositories?.totalCount ?? 0,
-    longestStreak: streaks.longestStreak,
-    currentStreak: streaks.currentStreak,
+    longestStreak,
+    currentStreak,
     totalContributions
   });
 }
@@ -132,7 +156,7 @@ ranking.sort((a, b) =>
 const output = {
   generatedAt: now.toISOString(),
   timezone: 'Asia/Jakarta',
-  streakDefinition: 'A streak day is a GitHub contribution-calendar day with at least 1 contribution.',
+  streakDefinition: 'Streak diambil dari streak-stats API (all-time); fallback ke kalender kontribusi GitHub 1 tahun terakhir.',
   streakWindow: { from, to },
   candidateCount: candidates.size,
   evaluatedCount: ranking.length,
