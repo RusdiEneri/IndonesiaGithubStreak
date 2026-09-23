@@ -105,7 +105,7 @@ for (const user of profiles) {
   const days = user.contributionsCollection?.contributionCalendar?.weeks
     ?.flatMap((week) => week.contributionDays) ?? [];
   const streaks = calculateStreaks(days, today);
-  const totalContributions = user.contributionsCollection?.totalContributions ?? 0;
+  const totalContributions = user.contributionsCollection?.contributionCalendar?.totalContributions ?? 0;
 
   ranking.push({
     login: user.login,

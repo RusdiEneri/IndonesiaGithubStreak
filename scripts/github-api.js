@@ -75,7 +75,6 @@ function buildGraphqlQuery(count) {
       followers { totalCount }
       publicRepositories: repositories(privacy: PUBLIC, first: 1) { totalCount }
       contributionsCollection(from: $from, to: $to) {
-        totalContributions: contributionCalendar { totalContributions }
         contributionCalendar {
           weeks {
             contributionDays {
