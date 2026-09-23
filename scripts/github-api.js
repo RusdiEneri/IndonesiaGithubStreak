@@ -11,6 +11,20 @@ function headers(token) {
   return result;
 }
 
+async function fetchWithRetry(url, options, maxRetries = 2) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, options);
+    if ((res.status === 403 || res.status === 429) && attempt < maxRetries) {
+      const retryAfter = Number(res.headers.get('retry-after') || 10);
+      const waitMs = Math.max(retryAfter * 1000, 10000);
+      console.warn(`Rate limit encountered (${res.status}). Waiting ${waitMs / 1000}s before retry...`);
+      await new Promise((r) => setTimeout(r, waitMs));
+      continue;
+    }
+    return res;
+  }
+}
+
 async function parseJson(response) {
   const text = await response.text();
   let body;
@@ -28,7 +42,7 @@ async function parseJson(response) {
 
 export async function searchUsers({ token, query, perPage = 100 }) {
   const params = new URLSearchParams({ q: query, per_page: String(perPage), page: '1' });
-  const response = await fetch(`${REST_API}/search/users?${params}`, {
+  const response = await fetchWithRetry(`${REST_API}/search/users?${params}`, {
     headers: headers(token)
   });
   const data = await parseJson(response);
@@ -78,7 +92,7 @@ function buildGraphqlQuery(count) {
   return `query(${variableLines}, $from: DateTime!, $to: DateTime!) { ${fields} }`;
 }
 
-export async function getContributionCalendars({ token, logins, from, to, batchSize = 8 }) {
+export async function getContributionCalendars({ token, logins, from, to, batchSize = 1, delayMs = 3000 }) {
   const output = [];
 
   for (let start = 0; start < logins.length; start += batchSize) {
@@ -89,7 +103,7 @@ export async function getContributionCalendars({ token, logins, from, to, batchS
       variables[`u${index}`] = login;
     });
 
-    const response = await fetch(GRAPHQL_API, {
+    const response = await fetchWithRetry(GRAPHQL_API, {
       method: 'POST',
       headers: {
         ...headers(token),
@@ -111,6 +125,10 @@ export async function getContributionCalendars({ token, logins, from, to, batchS
     }
 
     process.stdout.write(`GraphQL ${Math.min(start + batch.length, logins.length)}/${logins.length}\n`);
+
+    if (start + batchSize < logins.length && delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
 
   return output;

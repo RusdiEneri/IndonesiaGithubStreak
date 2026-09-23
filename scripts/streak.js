@@ -22,9 +22,12 @@ export function calculateStreaks(days, today) {
     previous = date;
   }
 
+  // ponytail: 1-year trailing window ceiling due to GitHub GraphQL contributionsCollection API limit.
+  // Any streak exceeding 365 days is bounded by the query window.
+  // Upgrade path: query multiple yearly aliased collections if multi-year historical tracking is required.
   let currentStreak = 0;
-  let cursor = today;
-  while (active.has(cursor)) {
+  let cursor = active.has(today) ? today : (active.has(shiftDate(today, -1)) ? shiftDate(today, -1) : null);
+  while (cursor && active.has(cursor)) {
     currentStreak += 1;
     cursor = shiftDate(cursor, -1);
   }

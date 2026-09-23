@@ -12,13 +12,17 @@ const extraUsers = JSON.parse(await fs.readFile(path.join(ROOT, 'data', 'extra-u
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 if (!token) throw new Error('Missing GH_TOKEN or GITHUB_TOKEN');
 
-const maxCandidates = Number(process.env.MAX_CANDIDATES || 250);
-const perLocation = Number(process.env.SEARCH_PER_LOCATION || 100);
-const batchSize = Number(process.env.GRAPHQL_BATCH_SIZE || 8);
-const from = process.env.STREAK_FROM || '2008-01-01T00:00:00Z';
+const maxCandidates = Number(process.env.MAX_CANDIDATES || 100);
+const perLocation = Number(process.env.SEARCH_PER_LOCATION || 20);
+const batchSize = Number(process.env.GRAPHQL_BATCH_SIZE || 1);
+const searchDelayMs = Number(process.env.SEARCH_DELAY_MS || 5000);
+const graphqlDelayMs = Number(process.env.GRAPHQL_DELAY_MS || 3000);
+
 const now = new Date();
+// ponytail: default 1-year trailing window. GitHub GraphQL limits contributionsCollection to max 1 year.
+const defaultFrom = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
+const from = process.env.STREAK_FROM || defaultFrom;
 const to = process.env.STREAK_TO || now.toISOString();
-const searchDelayMs = Number(process.env.SEARCH_DELAY_MS || 2200);
 const today = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Asia/Jakarta'
 }).format(now);
@@ -63,7 +67,8 @@ const profiles = await getContributionCalendars({
   logins: orderedCandidates.map((user) => user.login),
   from,
   to,
-  batchSize
+  batchSize,
+  delayMs: graphqlDelayMs
 });
 
 const ranking = [];
