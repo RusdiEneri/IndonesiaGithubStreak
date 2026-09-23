@@ -37,16 +37,16 @@ function render() {
       <td class="rank">${index + 1}</td>
       <td>
         <div class="user">
-          <img class="avatar" src="${esc(user.avatarUrl)}" alt="">
+          <img class="avatar" src="${esc(user.avatarUrl)}" alt="" loading="lazy" width="36" height="36">
           <div>
             <a href="${esc(user.htmlUrl)}" target="_blank" rel="noreferrer">${esc(user.login)}</a>
-            <small>${esc(user.name || user.location || 'GitHub user')}</small>
+            <small>${esc(user.name || user.location || '')}</small>
           </div>
         </div>
       </td>
-      <td><span class="badge">🔥 <span class="streak">${fmt.format(user.longestStreak)}</span> hari</span></td>
-      <td><span class="badge">⚡ ${fmt.format(user.currentStreak)} hari</span></td>
-      <td>${fmt.format(user.totalContributions)}</td>
+      <td><span class="badge-longest">🔥 <span class="n">${fmt.format(user.longestStreak)}</span><span class="unit">hari</span></span></td>
+      <td><span class="badge-current">⚡ <span class="n">${fmt.format(user.currentStreak)}</span><span class="unit">hari</span></span></td>
+      <td class="contrib">${fmt.format(user.totalContributions)}</td>
     </tr>
   `).join('');
 

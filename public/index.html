@@ -4,18 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GitHub Streak Indonesia</title>
-  <meta name="description" content="Leaderboard longest GitHub streak untuk developer di Indonesia.">
+  <meta name="description" content="Leaderboard longest GitHub contribution streak untuk developer di Indonesia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="container">
     <header class="hero">
-      <div>
-        <div class="eyebrow">🇮🇩 INDONESIA GITHUB COMMUNITY</div>
+      <div class="hero-text">
+        <p class="region-tag">🇮🇩 Indonesia · GitHub Community</p>
         <h1>GitHub Streak Indonesia</h1>
-        <p>Leaderboard berdasarkan <strong>longest contribution streak</strong> pada kalender kontribusi GitHub.</p>
+        <p class="hero-sub">Leaderboard berdasarkan <strong>longest contribution streak</strong> pada kalender GitHub. Data diperbarui otomatis setiap hari.</p>
       </div>
-      <a class="github-link" href="https://github.com/" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a class="github-link" href="https://github.com/RusdiEneri/indonesia-github-streak-v0.1" target="_blank" rel="noreferrer">GitHub ↗</a>
     </header>
 
     <section class="stats" id="stats">
@@ -30,18 +33,19 @@
         <option value="25">25 user</option>
         <option value="50">50 user</option>
         <option value="100" selected>100 user</option>
-        <option value="250">250 user</option>
+        <!-- <option value="250">250 user</option> -->
       </select>
     </section>
 
     <div id="notice" class="notice"></div>
+
     <section id="tableWrap" class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>#</th>
             <th>Developer</th>
-            <th>Longest streak</th>
+            <th>Longest</th>
             <th>Current</th>
             <th>Contributions</th>
           </tr>
@@ -51,7 +55,7 @@
     </section>
 
     <footer>
-      <p>Data publik GitHub • Diperbarui otomatis oleh GitHub Actions</p>
+      <p>Data publik GitHub · Diperbarui otomatis oleh GitHub Actions</p>
       <p id="window"></p>
     </footer>
   </main>
