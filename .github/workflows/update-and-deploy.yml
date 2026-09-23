@@ -4,6 +4,9 @@ on:
   schedule: 
     - cron: '0 11 * * *' 
   workflow_dispatch: 
+  push:
+    paths:
+      - '.github/workflows/update-and-deploy.yml'
  
 permissions: 
   contents: read 
