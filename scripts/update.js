@@ -38,11 +38,12 @@ for (const [index, location] of locations.entries()) {
     break;
   }
 
-  const query = `location:${JSON.stringify(location)} sort:followers-desc`;
+  const query = `location:${JSON.stringify(location)} type:user sort:followers-desc`;
   console.log(`Searching users: ${query}`);
   try {
     const users = await searchUsers({ token, query, perPage: perLocation });
     for (const user of users) {
+      if (user.type && user.type !== 'User') continue;
       candidates.set(user.login, {
         login: user.login,
         avatarUrl: user.avatar_url,

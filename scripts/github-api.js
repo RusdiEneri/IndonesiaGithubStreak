@@ -115,8 +115,14 @@ export async function getContributionCalendars({ token, logins, from, to, batchS
 
     const payload = await parseJson(response);
     if (payload.errors?.length) {
-      const message = payload.errors.map((error) => error.message).join('; ');
-      throw new Error(`GraphQL error: ${message}`);
+      // ponytail: Skip individual missing/deleted/org accounts without failing the entire run
+      const fatalErrors = payload.errors.filter(
+        (err) => !err.message?.includes('Could not resolve to a User')
+      );
+      if (fatalErrors.length) {
+        const message = fatalErrors.map((error) => error.message).join('; ');
+        throw new Error(`GraphQL error: ${message}`);
+      }
     }
 
     for (const login of batch) {
