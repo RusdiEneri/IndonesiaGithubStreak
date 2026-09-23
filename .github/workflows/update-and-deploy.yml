@@ -39,7 +39,6 @@ jobs:
         with: 
           node-version: 24 
  
-      # TAMBAHAN: Menghitung tanggal tepat 1 tahun yang lalu
       - name: Calculate 1 year ago date
         id: date_calc
         run: echo "streak_from=$(date -u -d '1 year ago' +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
@@ -47,11 +46,11 @@ jobs:
       - name: Generate leaderboard data 
         env: 
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-          MAX_CANDIDATES: 150          # Dikurangi dari 250 agar total request lebih aman
-          SEARCH_PER_LOCATION: 100 
-          SEARCH_DELAY_MS: 2200 
-          GRAPHQL_BATCH_SIZE: 2        # SANGAT PENTING: Turunkan dari 8 menjadi 2 (atau 1)
-          GRAPHQL_DELAY_MS: 2000       # Tambahkan jeda 2 detik antar request GraphQL
+          MAX_CANDIDATES: 100          # Dikurangi jadi 100 (sudah cukup untuk top leaderboard)
+          SEARCH_PER_LOCATION: 20      # Dikurangi dari 100. (32 lokasi * 20 = 640 kandidat, lebih dari cukup)
+          SEARCH_DELAY_MS: 5000        # SANGAT PENTING: Naikkan jadi 5 detik (aman di bawah batas 30 req/menit)
+          GRAPHQL_BATCH_SIZE: 1        # Turunkan jadi 1 per request agar sangat ringan
+          GRAPHQL_DELAY_MS: 3000       # Naikkan jadi 3 detik antar request kalender
           STREAK_FROM: ${{ steps.date_calc.outputs.streak_from }}
         run: node scripts/update.js 
  
